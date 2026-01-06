@@ -3,97 +3,50 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>Private Messenger</title>
+    <title>System Config</title>
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-database-compat.js"></script>
     
     <style>
-        :root { --bg: #0b141a; --header: #202c33; --my-msg: #005c4b; --accent: #00a884; }
-        
+        :root { --bg: #0b141a; --header: #202c33; --my-msg: #005c4b; --their-msg: #202c33; --accent: #00a884; }
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', sans-serif; }
-        
-        /* Full Screen Fix for Mobile */
-        html, body { 
-            height: 100%; 
-            width: 100%; 
-            overflow: hidden; 
-            background: var(--bg);
-            position: fixed; /* Prevents body scroll */
-        }
+        html, body { height: 100%; width: 100%; overflow: hidden; background: var(--bg); position: fixed; }
+        #app-container { display: flex; flex-direction: column; height: 100%; width: 100%; }
 
-        #app-container {
-            display: flex;
-            flex-direction: column;
-            height: 100%; /* Dynamic height */
-            width: 100%;
-        }
-
-        /* Login Screen */
-        #login-box { 
-            position: fixed; inset: 0; background: var(--bg); z-index: 9999; 
-            display: flex; justify-content: center; align-items: center; padding: 20px;
-        }
+        /* Login */
+        #login-box { position: fixed; inset: 0; background: var(--bg); z-index: 9999; display: flex; justify-content: center; align-items: center; padding: 20px; }
         .login-card { background: var(--header); padding: 30px; border-radius: 20px; width: 100%; max-width: 350px; text-align: center; color: white; border: 1px solid #334155; }
-        input[type="text"], input[type="password"] { width: 100%; padding: 15px; margin-bottom: 12px; background: #2a3942; border: none; border-radius: 10px; color: white; font-size: 16px; outline: none; }
-        .btn-access { width: 100%; padding: 15px; background: var(--accent); color: white; border: none; border-radius: 10px; font-weight: bold; font-size: 16px; }
+        input { width: 100%; padding: 15px; margin-bottom: 12px; background: #2a3942; border: none; border-radius: 10px; color: white; font-size: 16px; outline: none; }
+        .btn-access { width: 100%; padding: 15px; background: var(--accent); color: white; border: none; border-radius: 10px; font-weight: bold; }
 
-        /* Chat Layout */
+        /* Chat UI */
         header { background: var(--header); padding: 12px 16px; display: flex; align-items: center; justify-content: space-between; color: white; border-bottom: 1px solid #333; flex-shrink: 0; }
+        #chat-window { flex: 1; overflow-y: auto; padding: 15px; display: flex; flex-direction: column; gap: 8px; background-image: url('https://user-images.githubusercontent.com/15075759/28719144-86dc0f70-73b1-11e7-911d-60d70fcded21.png'); background-attachment: fixed; }
 
-        #chat-window { 
-            flex: 1; 
-            overflow-y: auto; 
-            padding: 15px; 
-            display: flex; 
-            flex-direction: column; 
-            gap: 8px; 
-            background-image: url('https://user-images.githubusercontent.com/15075759/28719144-86dc0f70-73b1-11e7-911d-60d70fcded21.png');
-            background-attachment: fixed;
-        }
-
-        .msg { max-width: 85%; padding: 10px 14px; border-radius: 12px; font-size: 15px; color: white; box-shadow: 0 1px 2px rgba(0,0,0,0.3); line-height: 1.4; }
+        /* Messages & Reply Style */
+        .msg { max-width: 85%; padding: 8px 12px; border-radius: 12px; font-size: 15px; color: white; box-shadow: 0 1px 2px rgba(0,0,0,0.3); position: relative; }
         .my-msg { align-self: flex-end; background: var(--my-msg); border-top-right-radius: 0; }
-        .their-msg { align-self: flex-start; background: #202c33; border-top-left-radius: 0; }
-        .u-tag { font-size: 9px; font-weight: bold; opacity: 0.5; display: block; margin-bottom: 2px; }
+        .their-msg { align-self: flex-start; background: var(--their-msg); border-top-left-radius: 0; }
+        .reply-content { background: rgba(0,0,0,0.2); border-left: 3px solid var(--accent); padding: 5px 8px; font-size: 12px; border-radius: 4px; margin-bottom: 5px; color: #bbb; }
+        .u-tag { font-size: 9px; font-weight: bold; opacity: 0.5; margin-bottom: 2px; }
 
-        .sayali-welcome { 
-            background: rgba(0, 168, 132, 0.15); border: 1px solid var(--accent); 
-            color: var(--accent); padding: 15px; border-radius: 12px; 
-            margin: 10px 0; text-align: center; font-style: italic; font-size: 14px;
-        }
+        /* Reply Preview Box */
+        #reply-preview { display: none; background: #1e2a30; border-left: 4px solid var(--accent); padding: 8px 15px; color: white; font-size: 13px; position: relative; }
+        #close-reply { position: absolute; right: 10px; top: 5px; color: #ef4444; font-size: 18px; cursor: pointer; }
 
-        /* Typing Indicator - Always visible above input */
-        #typing-area { 
-            height: 25px; 
-            padding: 0 15px; 
-            color: var(--accent); 
-            font-size: 12px; 
-            background: rgba(11, 20, 26, 0.8);
-            display: flex;
-            align-items: center;
-        }
-
-        /* Fixed Input Bar */
-        .input-bar { 
-            background: var(--header); 
-            padding: 10px; 
-            display: flex; 
-            gap: 10px; 
-            align-items: center;
-            flex-shrink: 0;
-            padding-bottom: max(10px, env(safe-area-inset-bottom));
-        }
-        #msg-input { flex: 1; background: #2a3942; border: none; padding: 12px 18px; border-radius: 25px; color: white; font-size: 16px; -webkit-user-select: text; }
-        .send-btn { background: var(--accent); color: white; border: none; width: 48px; height: 48px; border-radius: 50%; font-size: 20px; flex-shrink: 0; display: flex; align-items: center; justify-content: center; }
+        #typing-area { height: 20px; padding: 0 15px; color: var(--accent); font-size: 12px; background: rgba(11,20,26,0.8); display: flex; align-items: center; }
+        .input-bar { background: var(--header); padding: 10px; display: flex; gap: 10px; align-items: center; padding-bottom: max(10px, env(safe-area-inset-bottom)); }
+        #msg-input { flex: 1; background: #2a3942; border: none; padding: 12px 18px; border-radius: 25px; color: white; font-size: 16px; }
+        .send-btn { background: var(--accent); color: white; border: none; width: 45px; height: 45px; border-radius: 50%; font-size: 20px; flex-shrink: 0; }
     </style>
 </head>
 <body>
 
     <div id="login-box">
         <div class="login-card">
-            <h2 style="color:var(--accent)">Chat Here</h2>
+            <h2 style="color:var(--accent)">System Config</h2>
             <input type="text" id="username" placeholder="Name" autocomplete="off">
-            <input type="password" id="pincode" placeholder="Access PIN (Ask To Spescial Person)">
+            <input type="password" id="pincode" placeholder="Access PIN">
             <button class="btn-access" onclick="startApp()">AUTHORIZE</button>
         </div>
     </div>
@@ -103,11 +56,13 @@
             <div style="font-weight: bold; font-size: 14px;">🔒 SECURE LINE</div>
             <button onclick="clearChat()" style="color:#ef4444; background:none; border:none; font-size:10px;">WIPE</button>
         </header>
-
         <div id="chat-window"></div>
-
+        <div id="reply-preview">
+            <span id="close-reply" onclick="cancelReply()">×</span>
+            <div style="color:var(--accent); font-weight:bold; font-size:11px;" id="reply-user">User</div>
+            <div id="reply-text" style="opacity:0.8; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">Message</div>
+        </div>
         <div id="typing-area"></div>
-
         <form class="input-bar" onsubmit="event.preventDefault(); sendMessage();">
             <input type="text" id="msg-input" placeholder="Message..." autocomplete="off">
             <button type="submit" class="send-btn">➤</button>
@@ -126,6 +81,7 @@
     firebase.initializeApp(firebaseConfig);
     const database = firebase.database();
     let senderName = "";
+    let replyData = null;
 
     function startApp() {
         const pin = document.getElementById('pincode').value;
@@ -139,25 +95,35 @@
         } else { alert("Access Denied"); }
     }
 
-    const msgInput = document.getElementById('msg-input');
-    const chatWindow = document.getElementById('chat-window');
+    function setReply(user, text) {
+        replyData = { user, text };
+        document.getElementById('reply-user').innerText = user;
+        document.getElementById('reply-text').innerText = text;
+        document.getElementById('reply-preview').style.display = 'block';
+        document.getElementById('msg-input').focus();
+    }
+
+    function cancelReply() {
+        replyData = null;
+        document.getElementById('reply-preview').style.display = 'none';
+    }
 
     function sendMessage() {
-        const text = msgInput.value.trim();
+        const text = document.getElementById('msg-input').value.trim();
         if (text) {
-            database.ref("private_channel").push({ user: senderName, text: text, time: Date.now() });
-            msgInput.value = "";
+            const msgObj = { user: senderName, text: text, time: Date.now() };
+            if (replyData) {
+                msgObj.replyTo = replyData;
+                cancelReply();
+            }
+            database.ref("private_channel").push(msgObj);
+            document.getElementById('msg-input').value = "";
             database.ref("typing/" + senderName).set(false);
-            
-            // Focus fix to keep keyboard open
-            msgInput.focus();
+            document.getElementById('msg-input').focus();
         }
     }
 
-    // Typing Logic
-    msgInput.addEventListener('input', () => {
-        database.ref("typing/" + senderName).set(msgInput.value.length > 0);
-    });
+    msgInput.addEventListener('input', () => { database.ref("typing/" + senderName).set(msgInput.value.length > 0); });
 
     function listenForTyping() {
         database.ref("typing").on("value", (snap) => {
@@ -169,17 +135,17 @@
     function listenForMessages() {
         database.ref("private_channel").on("value", (snapshot) => {
             chatWindow.innerHTML = "";
-            if(senderName.toLowerCase() === "sayali") {
-                const div = document.createElement('div'); div.className = "sayali-welcome";
-                div.innerHTML = "<b>Hi Sayali! ❤️</b><br>Welcome to our private space. Speak your heart out.";
-                chatWindow.appendChild(div);
-            }
             snapshot.forEach((child) => {
                 const data = child.val();
                 const isMe = data.user === senderName;
                 const div = document.createElement('div');
                 div.className = `msg ${isMe ? 'my-msg' : 'their-msg'}`;
-                div.innerHTML = `<span class="u-tag">${data.user}</span>${data.text}`;
+                
+                // Double Tap to Reply
+                div.ondblclick = () => setReply(data.user, data.text);
+                
+                let replyHtml = data.replyTo ? `<div class="reply-content"><b>${data.replyTo.user}:</b> ${data.replyTo.text}</div>` : "";
+                div.innerHTML = `${replyHtml}<span class="u-tag">${data.user}</span>${data.text}`;
                 chatWindow.appendChild(div);
             });
             chatWindow.scrollTop = chatWindow.scrollHeight;
@@ -188,14 +154,9 @@
 
     function clearChat() { if(confirm("Wipe all data?")) database.ref("private_channel").remove(); }
 
-    // Vital Fix for Mobile Viewport
-    const fixHeight = () => {
-        document.getElementById('app-container').style.height = window.innerHeight + 'px';
-        window.scrollTo(0, 0);
-    };
+    const fixHeight = () => { document.getElementById('app-container').style.height = window.innerHeight + 'px'; };
     window.addEventListener('resize', fixHeight);
-    window.addEventListener('orientationchange', fixHeight);
-    setInterval(fixHeight, 500); // Constant check for keyboard
+    setInterval(fixHeight, 500);
 </script>
 </body>
 </html>
